@@ -25,3 +25,27 @@ class Board: # ChessBoard 8x8 grid
         """
         row, col = square_to_position(square)  # Convert square to (row, col)
         self.grid[row][col] = piece            # Set the piece at that position
+
+    def print_board(self) -> None:
+        """Print the current state of the chess board.
+        """
+        # print column letters which we start with 2 spaces so it aligns with the rows
+        print("  a b c d e f g h") 
+
+        # Print each row and go through each row index
+        for row in range(8):
+            rank = 8 - row # Calculate the rank number (8 to 1)
+            line = str(rank) + " " # Start the line with the rank number
+
+            for col in range(8): # Go through each column index (0 to 7)
+                piece = self.grid[row][col]
+                
+                 # If square is empty, print a dot
+                if piece is None:
+                    line += ". "
+                else: # Otherwise print the piece
+                    line += str(piece) + " "
+
+            print(line + str(rank))
+
+        print("  a b c d e f g h") # Bottom labels

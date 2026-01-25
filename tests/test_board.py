@@ -58,3 +58,21 @@ def test_starting_position_all_pieces():
     assert b.get_piece("e1").color == WHITE
     assert b.get_piece("a8").color == BLACK
     assert b.get_piece("e8").color == BLACK
+
+def test_move_piece_success():
+    b = Board()
+    b.setup_starting_position()
+
+    ok = b.move_piece("e2", "e4")
+    assert ok is True
+
+    assert b.get_piece("e2") is None
+    assert isinstance(b.get_piece("e4"), Pawn)
+    assert b.get_piece("e4").color == WHITE
+
+
+def test_move_piece_fail_empty_square():
+    b = Board()
+
+    ok = b.move_piece("e3", "e4")
+    assert ok is False

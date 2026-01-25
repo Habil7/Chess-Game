@@ -79,3 +79,15 @@ class Board: # ChessBoard 8x8 grid
         self.set_piece("f8", Bishop(BLACK))
         self.set_piece("g8", Knight(BLACK))
         self.set_piece("h8", Rook(BLACK))
+
+    def move_piece(self, from_square: str, to_square: str) -> bool:
+        """Move a piece from one square to another. 
+        Returns True if the move was successful, False otherwise."""
+        piece = self.get_piece(from_square) # Get the piece at the source square
+        
+        if piece is None:
+            return False  # No piece to move
+
+        self.set_piece(to_square, piece)  # Place piece at destination
+        self.set_piece(from_square, None)  # Remove piece from original square
+        return True

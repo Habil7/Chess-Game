@@ -197,6 +197,36 @@ class Board: # ChessBoard 8x8 grid
             target_piece = self.get_piece(to_square)
             if target_piece is not None and target_piece.color == piece.color:
                 return False
+            
+        # Check for Queen movement blocking
+        from chessgame.pieces import Queen # Import here to avoid circular imports
+
+        if isinstance(piece, Queen):
+            delta_row = to_row - from_row
+            delta_col = to_col - from_col
+
+            # Determine direction of movement
+            step_row = 0 if delta_row == 0 else (1 if delta_row > 0 else -1)
+            step_col = 0 if delta_col == 0 else (1 if delta_col > 0 else -1)
+
+            # Walk squares between start and destination
+            cur_row = from_row + step_row
+            cur_col = from_col + step_col
+
+            # Walk squares between start and destination
+            while (cur_row, cur_col) != (to_row, to_col):
+                middle_square = position_to_square((cur_row, cur_col))
+                if self.get_piece(middle_square) is not None:
+                    return False  # blocked
+
+                # Move to next square in the path
+                cur_row += step_row
+                cur_col += step_col
+
+            # Final square cannot capture your own piece
+            target_piece = self.get_piece(to_square)
+            if target_piece is not None and target_piece.color == piece.color:
+                return False
 
         self.set_piece(to_square, piece)   # Place piece at destination
         self.set_piece(from_square, None)  # Remove piece from original square

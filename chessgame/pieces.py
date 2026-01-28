@@ -140,6 +140,28 @@ class Queen(Piece):
         """
         return 'Q' if self.color == WHITE else 'q'
     
+    def can_move(self, from_row: int, from_col: int, to_row: int, to_col: int) -> bool:
+        """Return True if the queen can move from (from_row, from_col) to (to_row, to_col).
+        Queens move any number of squares along a rank, file, or diagonal.
+        """
+        row_diff = to_row - from_row
+        col_diff = to_col - from_col
+
+        # Check for rook-like movement (same row or same column)
+        if from_row == to_row and from_col != to_col:
+            return True # Same row movement
+
+        if from_col == to_col and from_row != to_row:
+            return True # Same column movement
+
+        # Check for bishop-like movement (diagonal)
+        if row_diff < 0:
+            row_diff = -row_diff
+        if col_diff < 0:
+            col_diff = -col_diff
+
+        return row_diff == col_diff # Diagonal movement
+    
 class King(Piece):
     """Class representing a King chess piece.
     """

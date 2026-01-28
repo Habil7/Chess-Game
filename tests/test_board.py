@@ -263,3 +263,59 @@ def test_knight_cannot_capture_own_piece():
 
     moved = b.move_piece("b1", "a3", WHITE)
     assert moved is False
+    
+def test_queen_rook_like_move_works():
+    b = Board()
+    b.set_piece("d4", Queen(WHITE))
+
+    moved = b.move_piece("d4", "d7", WHITE)
+    assert moved is True
+    assert b.get_piece("d4") is None
+    assert isinstance(b.get_piece("d7"), Queen)
+
+
+def test_queen_bishop_like_move_works():
+    b = Board()
+    b.set_piece("d4", Queen(WHITE))
+
+    moved = b.move_piece("d4", "g7", WHITE)
+    assert moved is True
+    assert b.get_piece("d4") is None
+    assert isinstance(b.get_piece("g7"), Queen)
+
+
+def test_queen_cannot_move_like_knight():
+    b = Board()
+    b.set_piece("d4", Queen(WHITE))
+
+    moved = b.move_piece("d4", "e6", WHITE)
+    assert moved is False
+
+
+def test_queen_cannot_jump_over_piece():
+    b = Board()
+    b.set_piece("d4", Queen(WHITE))
+    b.set_piece("d6", Pawn(WHITE))  # blocker
+
+    moved = b.move_piece("d4", "d7", WHITE)
+    assert moved is False
+
+
+def test_queen_can_capture_opponent():
+    b = Board()
+    b.set_piece("d4", Queen(WHITE))
+    b.set_piece("d7", Pawn(BLACK))
+
+    moved = b.move_piece("d4", "d7", WHITE)
+    assert moved is True
+    assert isinstance(b.get_piece("d7"), Queen)
+    assert b.get_piece("d7").color == WHITE
+
+
+def test_queen_cannot_capture_own_piece():
+    b = Board()
+    b.set_piece("d4", Queen(WHITE))
+    b.set_piece("d7", Pawn(WHITE))
+
+    moved = b.move_piece("d4", "d7", WHITE)
+    assert moved is False

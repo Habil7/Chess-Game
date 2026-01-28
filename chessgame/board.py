@@ -36,6 +36,92 @@ class Board: # ChessBoard 8x8 grid
         
         return piece.color != color            # Return True if colors differ
     
+    def find_king(self, color: str) -> str | None:
+        """Find the square of the king of the given color.
+        """
+        from chessgame.pieces import King # Import here to avoid circular imports
+
+        for row in range(8):         # Go through each row
+            for col in range(8):     # Go through each column
+                piece = self.grid[row][col]
+                
+                if piece is not None and isinstance(piece, King) and piece.color == color:
+                    return position_to_square((row, col)) # Return the square of the king
+        
+        return None # King not found 
+
+    def is_square_under_attack(self, target_square: str, attacker_color: str) -> bool:
+        """Check if the target square is under attack by any piece of the attacker_color.
+        """
+        from chessgame.pieces import Pawn, Rook, Bishop, Knight, Queen, King, WHITE, BLACK
+
+        # Determine which color is attacking
+        target_row, target_col = square_to_position(target_square)
+
+        for r in range(8):                        # Go through each row
+            for c in range(8):                    # Go through each column
+                piece = self.grid[r][c]           # Get the piece at (r, c)
+                if piece is None:                 # No piece present
+                    continue                      # Skip to next square
+                if piece.color != attacker_color: # Not an attacking piece
+                    continue                      # Skip to next square
+
+                # Pawn attacks are special: only diagonals (not forward)
+                if isinstance(piece, Pawn):
+                    direction = -1 if piece.color == WHITE else 1      # white pawns go up, black pawns go down
+                    col_diff = target_col - c                          # Calculate column difference
+                    if col_diff < 0:                                   # If the column difference is negative
+                        col_diff = -col_diff                           # Make it positive
+
+                    if target_row == r + direction and col_diff == 1:
+                        return True
+                    continue
+
+                # Knight + King attacks are just their shape rules
+                if isinstance(piece, Knight) or isinstance(piece, King):
+                    if piece.can_move(r, c, target_row, target_col):
+                        return True
+                    continue
+
+                # Sliding pieces (rook/bishop/queen) need clear path
+                if isinstance(piece, Rook) or isinstance(piece, Bishop) or isinstance(piece, Queen):
+                    if not piece.can_move(r, c, target_row, target_col):
+                        continue
+
+                    dr = target_row - r
+                    dc = target_col - c
+
+                    step_row = 0 if dr == 0 else (1 if dr > 0 else -1)
+                    step_col = 0 if dc == 0 else (1 if dc > 0 else -1)
+
+                    cur_row = r + step_row
+                    cur_col = c + step_col
+
+                    while cur_row != target_row or cur_col != target_col:
+                        # Check if any piece blocks the path
+                        if self.grid[cur_row][cur_col] is not None:
+                            break
+                        cur_row += step_row
+                        cur_col += step_col
+                    else:
+                        # The while loop ended normally no break => no blocking
+                        return True
+
+        return False
+
+    def is_in_check(self, color: str) -> bool:
+        """Check if the king of the given color is in check.
+        """
+        from chessgame.pieces import WHITE, BLACK
+
+        king_square = self.find_king(color) # Find the king's square
+
+        if king_square is None:             # If king not found
+            return False                    # Cannot be in check
+
+        opponent_color = BLACK if color == WHITE else WHITE
+        return self.is_square_under_attack(king_square, opponent_color)
+
     def set_piece(self, square: str, piece) -> None:
         """Set the piece at the given chess square.
         """
@@ -235,8 +321,18 @@ class Board: # ChessBoard 8x8 grid
             target_piece = self.get_piece(to_square)
             if target_piece is not None and target_piece.color == piece.color:
                 return False
+        
+        # Save what is currently on the destination square 
+        captured_piece = self.get_piece(to_square)
 
+        # Make the move temporarily
+        self.set_piece(to_square, piece)
+        self.set_piece(from_square, None)
 
-        self.set_piece(to_square, piece)   # Place piece at destination
-        self.set_piece(from_square, None)  # Remove piece from original square
+        # Illegal if it leaves your king in check
+        if self.is_in_check(turn_color):
+            self.set_piece(from_square, piece) # Undo the move
+            self.set_piece(to_square, captured_piece)
+            return False
+
         return True

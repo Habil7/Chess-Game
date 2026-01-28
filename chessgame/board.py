@@ -113,10 +113,9 @@ class Board: # ChessBoard 8x8 grid
         if not piece.can_move(from_row, from_col, to_row, to_col):
             return False # Move not allowed by piece rules
 
-        # Additional checks for Pawn movement
+        # Check for Pawn movement rules
         from chessgame.pieces import Pawn # We import here to avoid circular imports
 
-        # Check for Pawn movement rules
         if isinstance(piece, Pawn):
             target_piece = self.get_piece(to_square) # Get the piece at the destination square
 
@@ -164,6 +163,14 @@ class Board: # ChessBoard 8x8 grid
             if target_piece is not None and target_piece.color == piece.color:
                 return False
         
+        # Check for Knight movement capturing own piece
+        from chessgame.pieces import Knight # Import here to avoid circular imports
+
+        if isinstance(piece, Knight): # Knight movement
+            target_piece = self.get_piece(to_square)
+            if target_piece is not None and target_piece.color == piece.color:
+                return False
+
         # Check for Bishop movement blocking
         if piece.__class__.__name__ == "Bishop":
             step_row = 1 if to_row > from_row else -1

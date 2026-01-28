@@ -41,7 +41,7 @@ class Pawn(Piece):
         White pawns move "up" the board (row decreases).
         Black pawns move "down" the board (row increases).
         """
-        direction = -1 if self.color == WHITE else 1 # white: 6->5->4, black: 1->2->3
+        direction = -1 if self.color == WHITE else 1 # White: 6->5->4, Black: 1->2->3
         
         # Starting row: white pawns start at rank 2 -> row 6
         #               black pawns start at rank 7 -> row 1
@@ -91,6 +91,21 @@ class Knight(Piece):
         """
         return 'N' if self.color == WHITE else 'n'
     
+    def can_move(self, from_row: int, from_col: int, to_row: int, to_col: int) -> bool:
+        """Return True if the knight can move from (from_row, from_col) to (to_row, to_col).
+        Knights move in an "L" shape: two squares in one direction and then one square perpendicular.
+        """
+        delta_row = to_row - from_row # Calculate row difference
+        delta_col = to_col - from_col # Calculate column difference
+        
+        # Make differences positive
+        if delta_row < 0:              
+            delta_row = -delta_row    
+        if delta_col < 0:             
+            delta_col = -delta_col
+
+        return (delta_row == 2 and delta_col == 1) or (delta_row == 1 and delta_col == 2)
+
 class Bishop(Piece):
     """Class representing a Bishop chess piece.
     """

@@ -219,3 +219,47 @@ def test_bishop_cannot_capture_own_piece():
 
     moved = b.move_piece("c1", "f4", WHITE)
     assert moved is False
+
+def test_knight_l_move_works():
+    b = Board()
+    b.set_piece("b1", Knight(WHITE))
+
+    moved = b.move_piece("b1", "a3", WHITE)
+    assert moved is True
+    assert b.get_piece("b1") is None
+    assert b.get_piece("a3").__class__.__name__ == "Knight"
+
+def test_knight_cannot_move_like_bishop_or_rook():
+    b = Board()
+    b.set_piece("b1", Knight(WHITE))
+
+    moved1 = b.move_piece("b1", "b3", WHITE)  # straight
+    moved2 = b.move_piece("b1", "c2", WHITE)  # diagonal-ish
+    assert moved1 is False
+    assert moved2 is False
+
+def test_knight_can_jump_over_pieces():
+    b = Board()
+    b.set_piece("b1", Knight(WHITE))
+    b.set_piece("b2", Pawn(WHITE))  # blocker doesn't matter
+
+    moved = b.move_piece("b1", "a3", WHITE)
+    assert moved is True
+
+def test_knight_can_capture_opponent():
+    b = Board()
+    b.set_piece("b1", Knight(WHITE))
+    b.set_piece("a3", Pawn(BLACK))
+
+    moved = b.move_piece("b1", "a3", WHITE)
+    assert moved is True
+    assert b.get_piece("a3").__class__.__name__ == "Knight"
+    assert b.get_piece("a3").color == WHITE
+
+def test_knight_cannot_capture_own_piece():
+    b = Board()
+    b.set_piece("b1", Knight(WHITE))
+    b.set_piece("a3", Pawn(WHITE))
+
+    moved = b.move_piece("b1", "a3", WHITE)
+    assert moved is False

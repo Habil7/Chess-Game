@@ -63,8 +63,8 @@ def test_move_piece_success():
     b = Board()
     b.setup_starting_position()
 
-    ok = b.move_piece("e2", "e4")
-    assert ok is True
+    moved = b.move_piece("e2", "e4", WHITE)
+    assert moved is True
 
     assert b.get_piece("e2") is None
     assert isinstance(b.get_piece("e4"), Pawn)
@@ -74,5 +74,16 @@ def test_move_piece_success():
 def test_move_piece_fail_empty_square():
     b = Board()
 
-    ok = b.move_piece("e3", "e4")
-    assert ok is False
+    moved = b.move_piece("e3", "e4", WHITE)
+    assert moved is False
+
+def test_cannot_move_opponent_piece():
+    b = Board()
+    b.setup_starting_position()
+
+    moved = b.move_piece("e7", "e5", WHITE)  
+    assert moved is False
+
+    # Board should be unchanged
+    assert b.get_piece("e7") is not None
+    assert b.get_piece("e5") is None

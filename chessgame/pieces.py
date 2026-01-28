@@ -169,3 +169,18 @@ class King(Piece):
         """Return the symbol representing the King piece.
         """
         return 'K' if self.color == WHITE else 'k'    
+    
+    def can_move(self, from_row: int, from_col: int, to_row: int, to_col: int) -> bool:
+        """Return True if the king can move from (from_row, from_col) to (to_row, to_col).
+        Kings move one square in any direction.
+        """
+        row_diff = to_row - from_row
+        col_diff = to_col - from_col
+
+        # Make differences positive
+        if row_diff < 0:
+            row_diff = -row_diff
+        if col_diff < 0:
+            col_diff = -col_diff
+
+        return row_diff <= 1 and col_diff <= 1 and (row_diff + col_diff) > 0

@@ -273,7 +273,6 @@ def test_queen_rook_like_move_works():
     assert b.get_piece("d4") is None
     assert isinstance(b.get_piece("d7"), Queen)
 
-
 def test_queen_bishop_like_move_works():
     b = Board()
     b.set_piece("d4", Queen(WHITE))
@@ -283,14 +282,12 @@ def test_queen_bishop_like_move_works():
     assert b.get_piece("d4") is None
     assert isinstance(b.get_piece("g7"), Queen)
 
-
 def test_queen_cannot_move_like_knight():
     b = Board()
     b.set_piece("d4", Queen(WHITE))
 
     moved = b.move_piece("d4", "e6", WHITE)
     assert moved is False
-
 
 def test_queen_cannot_jump_over_piece():
     b = Board()
@@ -299,7 +296,6 @@ def test_queen_cannot_jump_over_piece():
 
     moved = b.move_piece("d4", "d7", WHITE)
     assert moved is False
-
 
 def test_queen_can_capture_opponent():
     b = Board()
@@ -311,11 +307,54 @@ def test_queen_can_capture_opponent():
     assert isinstance(b.get_piece("d7"), Queen)
     assert b.get_piece("d7").color == WHITE
 
-
 def test_queen_cannot_capture_own_piece():
     b = Board()
     b.set_piece("d4", Queen(WHITE))
     b.set_piece("d7", Pawn(WHITE))
 
     moved = b.move_piece("d4", "d7", WHITE)
+    assert moved is False
+
+def test_king_one_step_move_works():
+    b = Board()
+    b.set_piece("e4", King(WHITE))
+
+    moved = b.move_piece("e4", "e5", WHITE)
+    assert moved is True
+    assert b.get_piece("e4") is None
+    assert isinstance(b.get_piece("e5"), King)
+
+def test_king_diagonal_move_works():
+    b = Board()
+    b.set_piece("e4", King(WHITE))
+
+    moved = b.move_piece("e4", "f5", WHITE)
+    assert moved is True
+
+def test_king_cannot_move_two_squares():
+    b = Board()
+    b.set_piece("e4", King(WHITE))
+
+    moved1 = b.move_piece("e4", "e6", WHITE)
+    assert moved1 is False
+
+    moved2 = b.move_piece("e4", "g4", WHITE)
+    assert moved2 is False
+
+def test_king_can_capture_opponent():
+    b = Board()
+    b.set_piece("e4", King(WHITE))
+    b.set_piece("f5", Pawn(BLACK))
+
+    moved = b.move_piece("e4", "f5", WHITE)
+    assert moved is True
+    assert isinstance(b.get_piece("f5"), King)
+    assert b.get_piece("f5").color == WHITE
+
+def test_king_cannot_capture_own_piece():
+    b = Board()
+    b.set_piece("e4", King(WHITE))
+    b.set_piece("f5", Pawn(WHITE))
+
+    moved = b.move_piece("e4", "f5", WHITE)
     assert moved is False

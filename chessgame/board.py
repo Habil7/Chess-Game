@@ -227,6 +227,15 @@ class Board: # ChessBoard 8x8 grid
             target_piece = self.get_piece(to_square)
             if target_piece is not None and target_piece.color == piece.color:
                 return False
+        
+        # Check for King movement capturing own piece
+        from chessgame.pieces import King # Import here to avoid circular imports
+
+        if isinstance(piece, King):
+            target_piece = self.get_piece(to_square)
+            if target_piece is not None and target_piece.color == piece.color:
+                return False
+
 
         self.set_piece(to_square, piece)   # Place piece at destination
         self.set_piece(from_square, None)  # Remove piece from original square

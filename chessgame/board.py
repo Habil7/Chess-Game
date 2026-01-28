@@ -116,6 +116,7 @@ class Board: # ChessBoard 8x8 grid
         # Additional checks for Pawn movement
         from chessgame.pieces import Pawn # We import here to avoid circular imports
 
+        # Check for Pawn movement rules
         if isinstance(piece, Pawn):
             target_piece = self.get_piece(to_square) # Get the piece at the destination square
 
@@ -159,6 +160,33 @@ class Board: # ChessBoard 8x8 grid
                 cur_col += step_col
 
             # Final square cannot capture your own piece
+            target_piece = self.get_piece(to_square)
+            if target_piece is not None and target_piece.color == piece.color:
+                return False
+        
+        # Check for Bishop movement blocking
+        if piece.__class__.__name__ == "Bishop":
+            step_row = 1 if to_row > from_row else -1
+            step_col = 1 if to_col > from_col else -1
+
+            cur_row = from_row + step_row
+            cur_col = from_col + step_col
+
+            # Walk diagonally until destination 
+            while cur_row != to_row or cur_col != to_col:
+                middle_square = position_to_square((cur_row, cur_col))
+
+                # If we are at destination, stop checking middle squares
+                if middle_square == to_square:
+                    break
+
+                if self.get_piece(middle_square) is not None:
+                    return False  # blocked
+
+                cur_row += step_row
+                cur_col += step_col
+
+            # Destination cannot capture your own piece
             target_piece = self.get_piece(to_square)
             if target_piece is not None and target_piece.color == piece.color:
                 return False

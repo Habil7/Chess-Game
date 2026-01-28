@@ -83,7 +83,6 @@ class Rook(Piece):
         
         return False
 
-
 class Knight(Piece):
     """Class representing a Knight chess piece.
     """
@@ -99,6 +98,24 @@ class Bishop(Piece):
         """Return the symbol representing the Bishop piece.
         """
         return 'B' if self.color == WHITE else 'b'
+    
+    def can_move(self, from_row: int, from_col: int, to_row: int, to_col: int) -> bool:
+        """Return True if the bishop can move from (from_row, from_col) to (to_row, to_col).
+        Bishops move any number of squares diagonally.
+        """
+        row_diff = to_row - from_row
+        col_diff = to_col - from_col
+
+        # Cannot move if not diagonal
+        if row_diff == 0 or col_diff == 0:
+            return False # Not a diagonal move
+        
+        if row_diff < 0:
+            row_diff = -row_diff
+        if col_diff < 0: # We write it because it is easier to read
+            col_diff = -col_diff
+
+        return row_diff == col_diff # Diagonal move
     
 class Queen(Piece):
     """Class representing a Queen chess piece.

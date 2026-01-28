@@ -177,3 +177,45 @@ def test_rook_cannot_capture_own_piece():
 
     moved = b.move_piece("a1", "a4", WHITE)
     assert moved is False
+
+def test_bishop_diagonal_move_works():
+    b = Board()
+    b.set_piece("c1", Bishop(WHITE))
+
+    moved = b.move_piece("c1", "f4", WHITE)
+    assert moved is True
+    assert b.get_piece("c1") is None
+    assert b.get_piece("f4").__class__.__name__ == "Bishop"
+
+def test_bishop_cannot_move_straight():
+    b = Board()
+    b.set_piece("c1", Bishop(WHITE))
+
+    moved = b.move_piece("c1", "c3", WHITE)
+    assert moved is False
+
+def test_bishop_cannot_jump_over_piece():
+    b = Board()
+    b.set_piece("c1", Bishop(WHITE))
+    b.set_piece("d2", Pawn(WHITE))  # blocker
+
+    moved = b.move_piece("c1", "f4", WHITE)
+    assert moved is False
+
+def test_bishop_can_capture_opponent():
+    b = Board()
+    b.set_piece("c1", Bishop(WHITE))
+    b.set_piece("f4", Pawn(BLACK))
+
+    moved = b.move_piece("c1", "f4", WHITE)
+    assert moved is True
+    assert b.get_piece("f4").__class__.__name__ == "Bishop"
+    assert b.get_piece("f4").color == WHITE
+
+def test_bishop_cannot_capture_own_piece():
+    b = Board()
+    b.set_piece("c1", Bishop(WHITE))
+    b.set_piece("f4", Pawn(WHITE))
+
+    moved = b.move_piece("c1", "f4", WHITE)
+    assert moved is False

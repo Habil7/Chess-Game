@@ -99,4 +99,39 @@ def test_pawn_illegal_backward_move():
     assert moved is True
 
     moved_back = b.move_piece("e3", "e2", WHITE)
-    assert moved_back is False
+    assert moved_back is False\
+    
+def test_pawn_cannot_move_forward_into_piece():
+    b = Board()
+    b.set_piece("e2", Pawn(WHITE))
+    b.set_piece("e3", Pawn(BLACK))
+
+    moved = b.move_piece("e2", "e3", WHITE)
+    assert moved is False
+
+def test_pawn_two_step_cannot_jump_over_piece():
+    b = Board()
+    b.set_piece("e2", Pawn(WHITE))
+    b.set_piece("e3", Pawn(BLACK))
+
+    moved = b.move_piece("e2", "e4", WHITE)
+    assert moved is False
+
+def test_pawn_diagonal_capture_requires_opponent():
+    b = Board()
+    b.set_piece("e2", Pawn(WHITE))
+
+    # diagonal to empty square should fail
+    moved = b.move_piece("e2", "f3", WHITE)
+    assert moved is False
+
+def test_pawn_diagonal_capture_works():
+    b = Board()
+    b.set_piece("e2", Pawn(WHITE))
+    b.set_piece("f3", Pawn(BLACK))
+
+    moved = b.move_piece("e2", "f3", WHITE)
+    assert moved is True
+    assert b.get_piece("e2") is None
+    assert isinstance(b.get_piece("f3"), Pawn)
+    assert b.get_piece("f3").color == WHITE

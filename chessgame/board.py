@@ -1,4 +1,4 @@
-from chessgame.types import square_to_position
+from chessgame.types import square_to_position, position_to_square
 
 class Board: # ChessBoard 8x8 grid
     """Class representing an 8x8 chess board.
@@ -14,12 +14,28 @@ class Board: # ChessBoard 8x8 grid
                 row_list.append(None) # Initialize each square to None
 
             self.grid.append(row_list) # Add the row to the grid
+
     def get_piece(self, square: str):
         """Return the piece at the given chess square.
         """
         row, col = square_to_position(square)  # Convert square to (row, col)
         return self.grid[row][col]             # Return the piece at that position
 
+    def is_empty(self, square: str) -> bool:
+        """Check if the given chess square is empty.
+        """
+        return self.get_piece(square) is None # Return True if no piece is present
+
+    def is_opponent_piece(self, square: str, color: str) -> bool:
+        """Check if the piece at the given square belongs to the opponent.
+        """
+        piece = self.get_piece(square)         # Get the piece at the square
+        
+        if piece is None:                      # If no piece is present
+            return False                       # Return False
+        
+        return piece.color != color            # Return True if colors differ
+    
     def set_piece(self, square: str, piece) -> None:
         """Set the piece at the given chess square.
         """
@@ -98,6 +114,29 @@ class Board: # ChessBoard 8x8 grid
         if not piece.can_move(from_row, from_col, to_row, to_col):
             return False # Move not allowed by piece rules
 
+        # Additional checks for Pawn movement
+        from chessgame.pieces import Pawn # We import here to avoid circular imports
+
+        if isinstance(piece, Pawn):
+            target_piece = self.get_piece(to_square) # Get the piece at the destination square
+
+            if from_col == to_col: # Moving forward 
+                if target_piece is not None:
+                    return False # Cannot move forward to an occupied square
+               
+                # Check if the square in between is empty
+                if abs(to_row - from_row) == 2: # Double move
+                    middle_row = (from_row + to_row) // 2
+                    middle_square = position_to_square((middle_row, from_col))
+                    if self.get_piece(middle_square) is not None:
+                        return False # Cannot jump over a piece
+            
+            else: # Capturing diagonally
+                if target_piece is None:
+                    return False # Cannot move diagonally without capturing
+                if target_piece.color == piece.color:
+                    return False # Cannot capture own piece
+                
         self.set_piece(to_square, piece)   # Place piece at destination
         self.set_piece(from_square, None)  # Remove piece from original square
         return True

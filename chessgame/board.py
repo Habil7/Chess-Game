@@ -56,7 +56,6 @@ class Board: # ChessBoard 8x8 grid
             for col in range(8): # Go through each column index (0 to 7)
                 piece = self.grid[row][col]
                 
-                 # If square is empty, print a dot
                 if piece is None:
                     line += ". "
                 else: # Otherwise print the piece
@@ -136,7 +135,34 @@ class Board: # ChessBoard 8x8 grid
                     return False # Cannot move diagonally without capturing
                 if target_piece.color == piece.color:
                     return False # Cannot capture own piece
-                
+
+        # Check for Rook movement blocking
+        if piece.__class__.__name__ == "Rook":
+            # Determine direction of movement (step_row, step_col)
+            if from_row == to_row:
+                step_row = 0
+                step_col = 1 if to_col > from_col else -1
+            else:
+                step_col = 0
+                step_row = 1 if to_row > from_row else -1
+
+            # Walk squares between start and destination 
+            cur_row = from_row + step_row
+            cur_col = from_col + step_col
+
+            while (cur_row, cur_col) != (to_row, to_col):
+                middle_square = position_to_square((cur_row, cur_col))
+                if self.get_piece(middle_square) is not None:
+                    return False  # blocked
+
+                cur_row += step_row
+                cur_col += step_col
+
+            # Final square cannot capture your own piece
+            target_piece = self.get_piece(to_square)
+            if target_piece is not None and target_piece.color == piece.color:
+                return False
+
         self.set_piece(to_square, piece)   # Place piece at destination
         self.set_piece(from_square, None)  # Remove piece from original square
         return True

@@ -70,6 +70,20 @@ class Rook(Piece):
         """
         return 'R' if self.color == WHITE else 'r'
     
+    def can_move(self, from_row: int, from_col: int, to_row: int, to_col: int) -> bool:
+        """Return True if the rook can move from (from_row, from_col) to (to_row, to_col).
+        Rooks move any number of squares along a rank or file.
+        """
+        # Moving along the same column
+        if from_row == to_row and from_col != to_col:
+            return True # Moving along the same row
+
+        if from_col == to_col and from_row != to_row:
+            return True
+        
+        return False
+
+
 class Knight(Piece):
     """Class representing a Knight chess piece.
     """

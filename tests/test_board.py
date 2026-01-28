@@ -135,3 +135,45 @@ def test_pawn_diagonal_capture_works():
     assert b.get_piece("e2") is None
     assert isinstance(b.get_piece("f3"), Pawn)
     assert b.get_piece("f3").color == WHITE
+
+def test_rook_straight_move_works():
+    b = Board()
+    b.set_piece("a1", Rook(WHITE))
+
+    moved = b.move_piece("a1", "a4", WHITE)
+    assert moved is True
+    assert b.get_piece("a1") is None
+    assert b.get_piece("a4").__class__.__name__ == "Rook"
+
+def test_rook_cannot_move_diagonal():
+    b = Board()
+    b.set_piece("a1", Rook(WHITE))
+
+    moved = b.move_piece("a1", "b2", WHITE)
+    assert moved is False
+
+def test_rook_cannot_jump_over_piece():
+    b = Board()
+    b.set_piece("a1", Rook(WHITE))
+    b.set_piece("a2", Pawn(WHITE))  # blocker
+
+    moved = b.move_piece("a1", "a4", WHITE)
+    assert moved is False
+
+def test_rook_can_capture_opponent():
+    b = Board()
+    b.set_piece("a1", Rook(WHITE))
+    b.set_piece("a4", Pawn(BLACK))
+
+    moved = b.move_piece("a1", "a4", WHITE)
+    assert moved is True
+    assert b.get_piece("a4").__class__.__name__ == "Rook"
+    assert b.get_piece("a4").color == WHITE
+
+def test_rook_cannot_capture_own_piece():
+    b = Board()
+    b.set_piece("a1", Rook(WHITE))
+    b.set_piece("a4", Pawn(WHITE))
+
+    moved = b.move_piece("a1", "a4", WHITE)
+    assert moved is False

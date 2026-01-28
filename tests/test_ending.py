@@ -1,6 +1,7 @@
 from chessgame.board import Board
 from chessgame.pieces import WHITE, BLACK, King, Queen
 
+# Test cases for checkmate and stalemate scenarios
 def test_checkmate_basic_queen_mate():
     b = Board()
 
@@ -11,6 +12,7 @@ def test_checkmate_basic_queen_mate():
     assert b.is_in_check(BLACK) is True
     assert b.is_checkmate(BLACK) is True
 
+# Test stalemate scenario
 def test_stalemate_basic():
     b = Board()
 

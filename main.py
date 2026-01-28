@@ -1,5 +1,6 @@
 from chessgame.board import Board
 from chessgame.pieces import WHITE, BLACK
+from chessgame.save_load import save_game, load_game, list_saves
 
 def is_valid_square(square: str) -> bool:
     """Check if the given square (e.g., 'e4') is a valid chess board square.
@@ -18,25 +19,70 @@ def is_valid_square(square: str) -> bool:
     
     return True
 
-
 def main():
     """Main function to start the chess game.
     """
     print("Chess Game and First Project started and launched!")
 
-    board = Board()
-    board.setup_starting_position()
+    board = Board() # Initialize the chess board
+
+    # Offer to load a saved game or start a new one
+    print("1) New game")  
+    print("2) Load game") 
+    choice = input("Select an option (1 or 2): ").strip()
+
+    # Handle loading a saved game
+    if choice == "2":
+        saves = list_saves()
+        if len(saves) == 0:
+            print("No saved games found. Starting a new game.")
+            board.setup_starting_position()
+            turn = WHITE
+        else:
+            print("Saved games:")
+            for i, name in enumerate(saves, start = 1):
+                print(f"{i}) {name}")
+
+            pick = input("Select a saved game by number: ").strip()
+            if not pick.isdigit():
+                print("Invalid selection! Starting a new game.")
+                board.setup_starting_position()
+                turn = WHITE
+            else:
+                idx = int(pick) - 1
+                if idx < 0 or idx >= len(saves):
+                    print("Invalid selection! Starting a new game.")
+                    board.setup_starting_position()
+                    turn = WHITE
+                else:
+                    save_name = saves[idx]
+                    turn = load_game(board, save_name)
+
+    else:
+        board.setup_starting_position()
+        turn = WHITE  # White starts first, always
+
     board.print_board()
-
-    turn = WHITE  # White starts first, always
-
+  
     while True:
-        print(f"\nTurn: {turn}")
-        move = input("Enter your move (e.g., e2 e4) or 'quit' to exit: ").strip()
+        print(f"\nTurn: {turn}") # Indicate whose turn it is
+        move = input("Enter move (e2 e4), 'save NAME', or 'quit': ").strip()
 
+        # Handle quitting the game
         if move == "quit" or move == "exit":
             print("Exiting the game.")
             break
+
+        # Handle saving the game
+        if move.lower().startswith("save"):
+            parts = move.split()
+            if len(parts) != 2:
+                print("Use: save NAME")
+                continue
+            save_name = parts[1]
+            save_game(board, turn, save_name)
+            print(f"Game saved as '{save_name}'.")
+            continue
 
         parts = move.split()
 

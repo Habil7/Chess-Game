@@ -1,6 +1,7 @@
 from chessgame.board import Board
 from chessgame.pieces import Pawn, Rook, Knight, Bishop, Queen, King, WHITE, BLACK
 
+# Basic tests for Board class functionality
 def test_board_set_and_get_piece_object():
     b = Board()
 
@@ -12,12 +13,14 @@ def test_board_set_and_get_piece_object():
 
     assert b.get_piece("e3") is None
 
+# Test printing the board 
 def test_print_board_runs(capsys):
     b = Board()
     b.print_board()
     out = capsys.readouterr().out
     assert "a b c d e f g h" in out
 
+# Test setting up the standard starting position
 def test_starting_position_all_pieces():
     b = Board()
     b.setup_starting_position()
@@ -56,6 +59,7 @@ def test_starting_position_all_pieces():
     assert b.get_piece("a8").color == BLACK
     assert b.get_piece("e8").color == BLACK
 
+# Test moving pieces
 def test_move_piece_success():
     b = Board()
     b.setup_starting_position()
@@ -67,12 +71,14 @@ def test_move_piece_success():
     assert isinstance(b.get_piece("e4"), Pawn)
     assert b.get_piece("e4").color == WHITE
 
+# Test moving from an empty square fails
 def test_move_piece_fail_empty_square():
     b = Board()
 
     moved = b.move_piece("e3", "e4", WHITE)
     assert moved is False
 
+# Test moving opponent's piece fails
 def test_cannot_move_opponent_piece():
     b = Board()
     b.setup_starting_position()
@@ -84,6 +90,7 @@ def test_cannot_move_opponent_piece():
     assert b.get_piece("e7") is not None
     assert b.get_piece("e5") is None
 
+# Pawn movement tests
 def test_pawn_legal_one_step_forward():
     b = Board()
     b.setup_starting_position()
@@ -91,6 +98,7 @@ def test_pawn_legal_one_step_forward():
     moved = b.move_piece("e2", "e3", WHITE)
     assert moved is True
 
+# Pawn two-step from starting position
 def test_pawn_illegal_backward_move():
     b = Board()
     b.setup_starting_position()
@@ -100,7 +108,8 @@ def test_pawn_illegal_backward_move():
 
     moved_back = b.move_piece("e3", "e2", WHITE)
     assert moved_back is False\
-    
+
+# Pawn two-step from starting position 
 def test_pawn_cannot_move_forward_into_piece():
     b = Board()
     b.set_piece("e2", Pawn(WHITE))
@@ -109,6 +118,7 @@ def test_pawn_cannot_move_forward_into_piece():
     moved = b.move_piece("e2", "e3", WHITE)
     assert moved is False
 
+# Pawn two-step from starting position
 def test_pawn_two_step_cannot_jump_over_piece():
     b = Board()
     b.set_piece("e2", Pawn(WHITE))
@@ -117,6 +127,7 @@ def test_pawn_two_step_cannot_jump_over_piece():
     moved = b.move_piece("e2", "e4", WHITE)
     assert moved is False
 
+# Pawn diagonal capture requires opponent piece
 def test_pawn_diagonal_capture_requires_opponent():
     b = Board()
     b.set_piece("e2", Pawn(WHITE))
@@ -125,6 +136,7 @@ def test_pawn_diagonal_capture_requires_opponent():
     moved = b.move_piece("e2", "f3", WHITE)
     assert moved is False
 
+# Pawn diagonal capture works
 def test_pawn_diagonal_capture_works():
     b = Board()
     b.set_piece("e2", Pawn(WHITE))
@@ -136,6 +148,7 @@ def test_pawn_diagonal_capture_works():
     assert isinstance(b.get_piece("f3"), Pawn)
     assert b.get_piece("f3").color == WHITE
 
+# Rook movement tests
 def test_rook_straight_move_works():
     b = Board()
     b.set_piece("a1", Rook(WHITE))
@@ -145,6 +158,7 @@ def test_rook_straight_move_works():
     assert b.get_piece("a1") is None
     assert b.get_piece("a4").__class__.__name__ == "Rook"
 
+# Rook cannot move diagonally
 def test_rook_cannot_move_diagonal():
     b = Board()
     b.set_piece("a1", Rook(WHITE))
@@ -152,14 +166,16 @@ def test_rook_cannot_move_diagonal():
     moved = b.move_piece("a1", "b2", WHITE)
     assert moved is False
 
+# Rook cannot jump over pieces
 def test_rook_cannot_jump_over_piece():
     b = Board()
     b.set_piece("a1", Rook(WHITE))
-    b.set_piece("a2", Pawn(WHITE))  # blocker
+    b.set_piece("a2", Pawn(WHITE)) # blocker
 
     moved = b.move_piece("a1", "a4", WHITE)
     assert moved is False
 
+# Rook capturing tests
 def test_rook_can_capture_opponent():
     b = Board()
     b.set_piece("a1", Rook(WHITE))
@@ -170,6 +186,7 @@ def test_rook_can_capture_opponent():
     assert b.get_piece("a4").__class__.__name__ == "Rook"
     assert b.get_piece("a4").color == WHITE
 
+# Rook cannot capture own piece
 def test_rook_cannot_capture_own_piece():
     b = Board()
     b.set_piece("a1", Rook(WHITE))
@@ -178,6 +195,7 @@ def test_rook_cannot_capture_own_piece():
     moved = b.move_piece("a1", "a4", WHITE)
     assert moved is False
 
+# Bishop movement tests
 def test_bishop_diagonal_move_works():
     b = Board()
     b.set_piece("c1", Bishop(WHITE))
@@ -187,6 +205,7 @@ def test_bishop_diagonal_move_works():
     assert b.get_piece("c1") is None
     assert b.get_piece("f4").__class__.__name__ == "Bishop"
 
+# Bishop cannot move straight
 def test_bishop_cannot_move_straight():
     b = Board()
     b.set_piece("c1", Bishop(WHITE))
@@ -194,6 +213,7 @@ def test_bishop_cannot_move_straight():
     moved = b.move_piece("c1", "c3", WHITE)
     assert moved is False
 
+# Bishop cannot jump over pieces
 def test_bishop_cannot_jump_over_piece():
     b = Board()
     b.set_piece("c1", Bishop(WHITE))
@@ -202,6 +222,7 @@ def test_bishop_cannot_jump_over_piece():
     moved = b.move_piece("c1", "f4", WHITE)
     assert moved is False
 
+# Bishop capturing tests
 def test_bishop_can_capture_opponent():
     b = Board()
     b.set_piece("c1", Bishop(WHITE))
@@ -212,6 +233,7 @@ def test_bishop_can_capture_opponent():
     assert b.get_piece("f4").__class__.__name__ == "Bishop"
     assert b.get_piece("f4").color == WHITE
 
+# Bishop cannot capture own piece
 def test_bishop_cannot_capture_own_piece():
     b = Board()
     b.set_piece("c1", Bishop(WHITE))
@@ -220,6 +242,7 @@ def test_bishop_cannot_capture_own_piece():
     moved = b.move_piece("c1", "f4", WHITE)
     assert moved is False
 
+# Knight movement tests
 def test_knight_l_move_works():
     b = Board()
     b.set_piece("b1", Knight(WHITE))
@@ -229,6 +252,7 @@ def test_knight_l_move_works():
     assert b.get_piece("b1") is None
     assert b.get_piece("a3").__class__.__name__ == "Knight"
 
+# Knight cannot move like bishop or rook
 def test_knight_cannot_move_like_bishop_or_rook():
     b = Board()
     b.set_piece("b1", Knight(WHITE))
@@ -238,6 +262,7 @@ def test_knight_cannot_move_like_bishop_or_rook():
     assert moved1 is False
     assert moved2 is False
 
+# Knight can jump over pieces
 def test_knight_can_jump_over_pieces():
     b = Board()
     b.set_piece("b1", Knight(WHITE))
@@ -246,6 +271,7 @@ def test_knight_can_jump_over_pieces():
     moved = b.move_piece("b1", "a3", WHITE)
     assert moved is True
 
+# Knight capturing tests
 def test_knight_can_capture_opponent():
     b = Board()
     b.set_piece("b1", Knight(WHITE))
@@ -256,6 +282,7 @@ def test_knight_can_capture_opponent():
     assert b.get_piece("a3").__class__.__name__ == "Knight"
     assert b.get_piece("a3").color == WHITE
 
+# Knight cannot capture own piece
 def test_knight_cannot_capture_own_piece():
     b = Board()
     b.set_piece("b1", Knight(WHITE))
@@ -263,7 +290,8 @@ def test_knight_cannot_capture_own_piece():
 
     moved = b.move_piece("b1", "a3", WHITE)
     assert moved is False
-    
+
+# Queen movement tests
 def test_queen_rook_like_move_works():
     b = Board()
     b.set_piece("d4", Queen(WHITE))
@@ -273,6 +301,7 @@ def test_queen_rook_like_move_works():
     assert b.get_piece("d4") is None
     assert isinstance(b.get_piece("d7"), Queen)
 
+# Queen movement tests
 def test_queen_bishop_like_move_works():
     b = Board()
     b.set_piece("d4", Queen(WHITE))
@@ -282,6 +311,7 @@ def test_queen_bishop_like_move_works():
     assert b.get_piece("d4") is None
     assert isinstance(b.get_piece("g7"), Queen)
 
+# Queen cannot move like knight
 def test_queen_cannot_move_like_knight():
     b = Board()
     b.set_piece("d4", Queen(WHITE))
@@ -289,6 +319,7 @@ def test_queen_cannot_move_like_knight():
     moved = b.move_piece("d4", "e6", WHITE)
     assert moved is False
 
+# Queen cannot jump over pieces
 def test_queen_cannot_jump_over_piece():
     b = Board()
     b.set_piece("d4", Queen(WHITE))
@@ -297,6 +328,7 @@ def test_queen_cannot_jump_over_piece():
     moved = b.move_piece("d4", "d7", WHITE)
     assert moved is False
 
+# Queen capturing tests
 def test_queen_can_capture_opponent():
     b = Board()
     b.set_piece("d4", Queen(WHITE))
@@ -307,6 +339,7 @@ def test_queen_can_capture_opponent():
     assert isinstance(b.get_piece("d7"), Queen)
     assert b.get_piece("d7").color == WHITE
 
+# Queen cannot capture own piece
 def test_queen_cannot_capture_own_piece():
     b = Board()
     b.set_piece("d4", Queen(WHITE))
@@ -315,6 +348,7 @@ def test_queen_cannot_capture_own_piece():
     moved = b.move_piece("d4", "d7", WHITE)
     assert moved is False
 
+# King movement tests
 def test_king_one_step_move_works():
     b = Board()
     b.set_piece("e4", King(WHITE))
@@ -324,6 +358,7 @@ def test_king_one_step_move_works():
     assert b.get_piece("e4") is None
     assert isinstance(b.get_piece("e5"), King)
 
+# King diagonal move
 def test_king_diagonal_move_works():
     b = Board()
     b.set_piece("e4", King(WHITE))
@@ -331,6 +366,7 @@ def test_king_diagonal_move_works():
     moved = b.move_piece("e4", "f5", WHITE)
     assert moved is True
 
+# King cannot move two squares
 def test_king_cannot_move_two_squares():
     b = Board()
     b.set_piece("e4", King(WHITE))
@@ -341,6 +377,7 @@ def test_king_cannot_move_two_squares():
     moved2 = b.move_piece("e4", "g4", WHITE)
     assert moved2 is False
 
+# King capturing tests
 def test_king_can_capture_opponent():
     b = Board()
     b.set_piece("e4", King(WHITE))
@@ -351,6 +388,7 @@ def test_king_can_capture_opponent():
     assert isinstance(b.get_piece("f5"), King)
     assert b.get_piece("f5").color == WHITE
 
+# King cannot capture own piece
 def test_king_cannot_capture_own_piece():
     b = Board()
     b.set_piece("e4", King(WHITE))

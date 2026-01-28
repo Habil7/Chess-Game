@@ -91,6 +91,13 @@ class Board: # ChessBoard 8x8 grid
         if piece.color != turn_color: # Check if the piece belongs to the current player
             return False              # Cannot move opponent's piece
 
+        from_row, from_col = square_to_position(from_square)
+        to_row, to_col = square_to_position(to_square)
+
+        # Check if the piece can move according to its movement rules
+        if not piece.can_move(from_row, from_col, to_row, to_col):
+            return False # Move not allowed by piece rules
+
         self.set_piece(to_square, piece)   # Place piece at destination
         self.set_piece(from_square, None)  # Remove piece from original square
         return True

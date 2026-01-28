@@ -1,7 +1,6 @@
 from chessgame.board import Board
 from chessgame.pieces import Pawn, Rook, Knight, Bishop, Queen, King, WHITE, BLACK
 
-
 def test_board_set_and_get_piece_object():
     b = Board()
 
@@ -13,13 +12,11 @@ def test_board_set_and_get_piece_object():
 
     assert b.get_piece("e3") is None
 
-
 def test_print_board_runs(capsys):
     b = Board()
     b.print_board()
     out = capsys.readouterr().out
     assert "a b c d e f g h" in out
-
 
 def test_starting_position_all_pieces():
     b = Board()
@@ -70,7 +67,6 @@ def test_move_piece_success():
     assert isinstance(b.get_piece("e4"), Pawn)
     assert b.get_piece("e4").color == WHITE
 
-
 def test_move_piece_fail_empty_square():
     b = Board()
 
@@ -87,3 +83,20 @@ def test_cannot_move_opponent_piece():
     # Board should be unchanged
     assert b.get_piece("e7") is not None
     assert b.get_piece("e5") is None
+
+def test_pawn_legal_one_step_forward():
+    b = Board()
+    b.setup_starting_position()
+
+    moved = b.move_piece("e2", "e3", WHITE)
+    assert moved is True
+
+def test_pawn_illegal_backward_move():
+    b = Board()
+    b.setup_starting_position()
+
+    moved = b.move_piece("e2", "e3", WHITE)
+    assert moved is True
+
+    moved_back = b.move_piece("e3", "e2", WHITE)
+    assert moved_back is False

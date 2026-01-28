@@ -9,7 +9,6 @@ def test_king_in_check_detected():
 
     assert b.is_in_check(WHITE) is True
 
-
 def test_cannot_move_into_check():
     b = Board()
     b.set_piece("e1", King(WHITE))

@@ -292,7 +292,7 @@ def test_queen_cannot_move_like_knight():
 def test_queen_cannot_jump_over_piece():
     b = Board()
     b.set_piece("d4", Queen(WHITE))
-    b.set_piece("d6", Pawn(WHITE))  # blocker
+    b.set_piece("d6", Pawn(WHITE)) # blocker
 
     moved = b.move_piece("d4", "d7", WHITE)
     assert moved is False

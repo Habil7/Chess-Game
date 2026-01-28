@@ -1,5 +1,7 @@
+# Chess Game Board Module
 from chessgame.types import square_to_position, position_to_square
 
+# ChessBoard Class
 class Board: # ChessBoard 8x8 grid
     """Class representing an 8x8 chess board.
     """
@@ -50,6 +52,50 @@ class Board: # ChessBoard 8x8 grid
         
         return None # King not found 
 
+    def try_move_no_turn_switch(self, from_square: str, to_square: str, turn_color: str) -> bool:
+        """Try to move a piece from one square to another without switching turns.
+        Returns True if the move was successful, False otherwise.
+        """
+        if from_square == to_square: # Cannot move to the same square
+            return False
+        
+        piece = self.get_piece(from_square) # Get the piece at the source square
+        if piece is None or piece.color != turn_color:
+            return False # No piece to move or not the player's piece
+        
+        target_piece = self.get_piece(to_square) # Get the piece at the destination square
+        if target_piece is not None and target_piece.color == turn_color:
+            return False # Cannot capture own piece
+        
+        moved = self.move_piece(from_square, to_square, turn_color) # Attempt the move
+        if not moved:
+            return False # Move failed
+        
+        self.set_piece(from_square, piece)      # Undo the move
+        self.set_piece(to_square, target_piece) # Restore captured piece if any
+
+        return True # Move was valid
+
+    def has_any_legal_move(self, color: str) -> bool:
+        """Check if the player of the given color has any legal moves.
+        """
+        for from_row in range(8):         # Go through each row
+            for from_col in range(8):     # Go through each column
+                piece = self.grid[from_row][from_col]
+                if piece is None or piece.color != color:
+                    continue # No piece or not player's piece
+
+                from_square = position_to_square((from_row, from_col))
+
+                for to_row in range(8):       # Go through each row for destination
+                    for to_col in range(8):   # Go through each column for destination
+                        to_square = position_to_square((to_row, to_col))
+
+                        if self.try_move_no_turn_switch(from_square, to_square, color):
+                            return True # Found a legal move
+
+        return False # No legal moves found
+
     def is_square_under_attack(self, target_square: str, attacker_color: str) -> bool:
         """Check if the target square is under attack by any piece of the attacker_color.
         """
@@ -68,7 +114,7 @@ class Board: # ChessBoard 8x8 grid
 
                 # Pawn attacks are special: only diagonals (not forward)
                 if isinstance(piece, Pawn):
-                    direction = -1 if piece.color == WHITE else 1      # white pawns go up, black pawns go down
+                    direction = -1 if piece.color == WHITE else 1      # White pawns go up, black pawns go down
                     col_diff = target_col - c                          # Calculate column difference
                     if col_diff < 0:                                   # If the column difference is negative
                         col_diff = -col_diff                           # Make it positive
@@ -103,8 +149,7 @@ class Board: # ChessBoard 8x8 grid
                             break
                         cur_row += step_row
                         cur_col += step_col
-                    else:
-                        # The while loop ended normally no break => no blocking
+                    else: # The while loop ended normally no break => no blocking
                         return True
 
         return False
@@ -122,6 +167,28 @@ class Board: # ChessBoard 8x8 grid
         opponent_color = BLACK if color == WHITE else WHITE
         return self.is_square_under_attack(king_square, opponent_color)
 
+    def is_checkmate(self, color: str) -> bool:
+        """Check if the player of the given color is in checkmate.
+        """
+        if not self.is_in_check(color): # Not in check
+            return False                # Cannot be checkmate
+
+        if self.has_any_legal_move(color): # Has legal moves
+            return False                    # Cannot be checkmate
+
+        return True # In check and no legal moves => checkmate
+
+    def is_stalemate(self, color: str) -> bool:
+        """Check if the player of the given color is in stalemate.
+        """
+        if self.is_in_check(color): # In check
+            return False            # Cannot be stalemate
+
+        if self.has_any_legal_move(color): # Has legal moves
+            return False                    # Cannot be stalemate
+
+        return True # Not in check and no legal moves => stalemate
+
     def set_piece(self, square: str, piece) -> None:
         """Set the piece at the given chess square.
         """
@@ -131,7 +198,7 @@ class Board: # ChessBoard 8x8 grid
     def print_board(self) -> None:
         """Print the current state of the chess board.
         """
-        # print column letters which we start with 2 spaces so it aligns with the rows
+        # Print column letters which we start with 2 spaces so it aligns with the rows
         print("  a b c d e f g h") 
 
         # Print each row and go through each row index

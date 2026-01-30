@@ -351,10 +351,6 @@ class Board: # ChessBoard 8x8 grid
             while cur_row != to_row or cur_col != to_col:
                 middle_square = position_to_square((cur_row, cur_col))
 
-                # If we are at destination, stop checking middle squares
-                if middle_square == to_square:
-                    break
-
                 if self.get_piece(middle_square) is not None:
                     return False  # blocked
 
@@ -419,4 +415,19 @@ class Board: # ChessBoard 8x8 grid
 
         piece.has_moved = True # Mark piece as having moved
 
-        return True
+        # Import here to avoid circular import problems
+        from chessgame.pieces import Queen, WHITE, BLACK
+
+        # Get the piece that just moved to the destination square
+        moved_piece = self.get_piece(to_square)
+
+        if isinstance(moved_piece, Pawn): # Check if the moved piece is a Pawn
+            # If a WHITE pawn reaches rank 8 → promote to Queen
+            if moved_piece.color == WHITE and to_square[1] == "8":
+                self.set_piece(to_square, Queen(WHITE))
+
+            # If a BLACK pawn reaches rank 1 → promote to Queen
+            elif moved_piece.color == BLACK and to_square[1] == "1":
+                self.set_piece(to_square, Queen(BLACK))
+
+        return True # Move completed successfully

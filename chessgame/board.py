@@ -69,22 +69,81 @@ class Board: # ChessBoard 8x8 grid
         if from_piece is None or from_piece.color != turn_color:
             return False # No piece to move or not the player's piece
         
-        to_piece = self.get_piece(to_square)
-        if to_piece is not None and to_piece.color == turn_color:
+        to_piece_before = self.get_piece(to_square)
+        if to_piece_before is not None and to_piece_before.color == turn_color:
             return False # Cannot capture own piece
         
         # Save current state to restore later
         old_has_moved = from_piece.has_moved           # Save current has_moved status
         old_en_passant_target = self.en_passant_target # Save current en passant target
         
+         # Track possible en passant capture removal so we can restore it
+        captured_ep_square = None
+        captured_ep_piece = None
+
+        from chessgame.pieces import Pawn, King, WHITE
+
+        # If this try-move is an en passant capture, the captured pawn is NOT on to_square.
+        # It sits behind the target square at (from_row, to_col).
+        if isinstance(from_piece, Pawn):
+            from_row, from_col = square_to_position(from_square)
+            to_row, to_col = square_to_position(to_square)
+
+            if from_col != to_col and to_piece_before is None and old_en_passant_target == to_square:
+                captured_ep_square = position_to_square((from_row, to_col))
+                captured_ep_piece = self.get_piece(captured_ep_square)
+
+        # Track castling rook movement so we can undo it too
+        castling = False
+        rook_square = None
+        rook_to_square = None
+        old_rook_has_moved = None
+
+        if isinstance(from_piece, King):
+            from_row, from_col = square_to_position(from_square)
+            to_row, to_col = square_to_position(to_square)
+            
+            if from_row == to_row and abs(to_col - from_col) == 2:
+                castling = True
+                kingside = to_col > from_col
+
+                if turn_color == WHITE:
+                    rook_square = "h1" if kingside else "a1"
+                    rook_to_square = "f1" if kingside else "d1"
+                else:
+                    rook_square = "h8" if kingside else "a8"
+                    rook_to_square = "f8" if kingside else "d8"
+
+                # We don't yet know if castle succeeds, so we also save the rook at original square now:
+                rook_at_start = self.get_piece(rook_square)
+                if rook_at_start is not None:
+                    old_rook_has_moved = rook_at_start.has_moved
+
         moved = self.move_piece(from_square, to_square, turn_color)
         if not moved:
             from_piece.has_moved = old_has_moved           # Restore has_moved status
             self.en_passant_target = old_en_passant_target # Restore en passant target
             return False                                   # Move was not successful
         
+        # Save rook AFTER move 
+        rook_after = None
+        if castling and rook_to_square is not None:
+            rook_after = self.get_piece(rook_to_square)
+
         self.set_piece(from_square, from_piece) # Undo the move
-        self.set_piece(to_square, to_piece)     # Restore captured piece if any
+        self.set_piece(to_square, to_piece_before)     # Restore captured piece if any
+
+        # If en passant capture removed a pawn, restore it
+        if captured_ep_square is not None:
+            self.set_piece(captured_ep_square, captured_ep_piece)
+
+        # If castling happened, restore rook back to its original square
+        if castling and rook_square is not None and rook_to_square is not None and rook_after is not None:
+            self.set_piece(rook_square, rook_after)
+            self.set_piece(rook_to_square, None)
+             # Restore rook has_moved if we saved it
+            if old_rook_has_moved is not None:
+                rook_after.has_moved = old_rook_has_moved
 
         from_piece.has_moved = old_has_moved           # Restore has_moved status
         self.en_passant_target = old_en_passant_target # Restore en passant target
@@ -263,10 +322,93 @@ class Board: # ChessBoard 8x8 grid
         self.set_piece("g8", Knight(BLACK))
         self.set_piece("h8", Rook(BLACK))
 
+    def try_castle(self, from_square: str, to_square: str, turn_color: str) -> bool:
+        """Attempt to castle (king moves 2 squares).
+        Returns True if castling is legal and performed, otherwise False.
+        """
+        from chessgame.pieces import King, Rook, WHITE, BLACK
+
+        king = self.get_piece(from_square)
+        if king is None or not isinstance(king, King) or king.color != turn_color:
+            return False
+
+        # King must not have moved
+        if king.has_moved:
+            return False
+
+        from_row, from_col = square_to_position(from_square)
+        to_row, to_col = square_to_position(to_square)
+
+        # Must be same row and exactly 2 columns
+        if from_row != to_row or abs(to_col - from_col) != 2:
+            return False
+
+        # King cannot castle out of check
+        if self.is_in_check(turn_color):
+            return False
+
+        # Determine side
+        kingside = to_col > from_col
+
+        # Rook square and squares between
+        if turn_color == WHITE:
+            rook_square = "h1" if kingside else "a1"
+            king_path_squares = ["f1", "g1"] if kingside else ["d1", "c1"]
+            between_squares = ["f1", "g1"] if kingside else ["b1", "c1", "d1"]
+            rook_to_square = "f1" if kingside else "d1"
+        else:
+            rook_square = "h8" if kingside else "a8"
+            king_path_squares = ["f8", "g8"] if kingside else ["d8", "c8"]
+            between_squares = ["f8", "g8"] if kingside else ["b8", "c8", "d8"]
+            rook_to_square = "f8" if kingside else "d8"
+
+        rook = self.get_piece(rook_square)
+        if rook is None or not isinstance(rook, Rook) or rook.color != turn_color:
+            return False
+
+        # Rook must not have moved
+        if rook.has_moved:
+            return False
+
+        # Squares between king and rook must be empty
+        for sq in between_squares:
+            if self.get_piece(sq) is not None:
+                return False
+
+        # Squares the king passes through (and destination) must not be under attack
+        opponent_color = BLACK if turn_color == WHITE else WHITE
+
+        for sq in king_path_squares:
+            if self.is_square_under_attack(sq, opponent_color):
+                return False
+
+        # Perform castling
+        self.set_piece(to_square, king)
+        self.set_piece(from_square, None)
+
+        self.set_piece(rook_to_square, rook)
+        self.set_piece(rook_square, None)
+
+        # Safety undo if still in check
+        if self.is_in_check(turn_color):
+            self.set_piece(from_square, king)
+            self.set_piece(to_square, None)
+            self.set_piece(rook_square, rook)
+            self.set_piece(rook_to_square, None)
+            return False
+
+        # Mark both as moved
+        king.has_moved = True
+        rook.has_moved = True
+
+        return True
+
     def move_piece(self, from_square: str, to_square: str, turn_color: str) -> bool:
         """Move a piece from one square to another, if it belongs to the current player's color.
         Returns True if the move was successful, False otherwise."""
         piece = self.get_piece(from_square) # Get the piece at the source square
+        
+        from chessgame.pieces import King, Pawn, Queen, Knight, WHITE, BLACK
         
         if piece is None: # Must be a piece to move
             return False  # No piece to move
@@ -277,40 +419,54 @@ class Board: # ChessBoard 8x8 grid
         from_row, from_col = square_to_position(from_square)
         to_row, to_col = square_to_position(to_square)
 
+        # Save en passant state from previous move   
         old_en_passant_target = self.en_passant_target
+        
+        # Reset by default: en passant target only exists for ONE move after a pawn double-step
         self.en_passant_target = None
 
+        # Helper: any failed move must restore old en passant target
+        def fail() -> bool:
+            self.en_passant_target = old_en_passant_target
+            return False
+        
+        # Handle castling BEFORE normal can_move check (because king.can_move doesn't allow 2 squares)
+        if isinstance(piece, King):
+            if from_row == to_row and abs(to_col - from_col) == 2:
+                if self.try_castle(from_square, to_square, turn_color):
+                    return True
+                return fail()
+    
         # Check if the piece can move according to its movement rules
         if not piece.can_move(from_row, from_col, to_row, to_col):
-            return False # Move not allowed by piece rules
-
-        # Check for Pawn movement rules
-        from chessgame.pieces import Pawn # We import here to avoid circular imports
+            return fail() # Move not allowed by piece rules
 
         if isinstance(piece, Pawn):
             target_piece = self.get_piece(to_square) # Get the piece at the destination square
 
             if from_col == to_col: # Moving forward 
                 if target_piece is not None:
-                    return False # Cannot move forward to an occupied square
+                    return fail() # Cannot move forward to an occupied square
                
                 # Check if the square in between is empty
                 if abs(to_row - from_row) == 2: # Double move
                     middle_row = (from_row + to_row) // 2
                     middle_square = position_to_square((middle_row, from_col))
+                    
                     if self.get_piece(middle_square) is not None:
-                        return False # Cannot jump over a piece
+                        return fail() # Cannot jump over a piece
 
-                    # # Store the square that can be captured via en passant on the next move
+                    # Store the square that can be captured via en passant on the next move
                     self.en_passant_target = middle_square 
 
             else: # Capturing diagonally
                 if target_piece is None:
+                    # Allow en passant only if landing square equals previous target
                     if old_en_passant_target != to_square:
-                        return False # Cannot move diagonally without capturing
+                        return fail() # Cannot move diagonally without capturing
                 else:
                     if target_piece.color == piece.color:
-                        return False # Cannot capture own piece
+                        return fail() # Cannot capture own piece
 
         # Check for Rook movement blocking
         if piece.__class__.__name__ == "Rook":
@@ -329,7 +485,7 @@ class Board: # ChessBoard 8x8 grid
             while (cur_row, cur_col) != (to_row, to_col):
                 middle_square = position_to_square((cur_row, cur_col))
                 if self.get_piece(middle_square) is not None:
-                    return False  # blocked
+                    return fail()  # blocked
 
                 cur_row += step_row
                 cur_col += step_col
@@ -337,15 +493,12 @@ class Board: # ChessBoard 8x8 grid
             # Final square cannot capture your own piece
             target_piece = self.get_piece(to_square)
             if target_piece is not None and target_piece.color == piece.color:
-                return False
+                return fail()
         
-        # Check for Knight movement capturing own piece
-        from chessgame.pieces import Knight # Import here to avoid circular imports
-
         if isinstance(piece, Knight): # Knight movement
             target_piece = self.get_piece(to_square)
             if target_piece is not None and target_piece.color == piece.color:
-                return False
+                return fail()
 
         # Check for Bishop movement blocking
         if piece.__class__.__name__ == "Bishop":
@@ -360,7 +513,7 @@ class Board: # ChessBoard 8x8 grid
                 middle_square = position_to_square((cur_row, cur_col))
 
                 if self.get_piece(middle_square) is not None:
-                    return False  # blocked
+                    return fail()  # blocked
 
                 cur_row += step_row
                 cur_col += step_col
@@ -368,11 +521,9 @@ class Board: # ChessBoard 8x8 grid
             # Destination cannot capture your own piece
             target_piece = self.get_piece(to_square)
             if target_piece is not None and target_piece.color == piece.color:
-                return False
+                return fail()
             
-        # Check for Queen movement blocking
-        from chessgame.pieces import Queen # Import here to avoid circular imports
-
+        # Queen movement blocking  
         if isinstance(piece, Queen):
             delta_row = to_row - from_row
             delta_col = to_col - from_col
@@ -389,7 +540,7 @@ class Board: # ChessBoard 8x8 grid
             while (cur_row, cur_col) != (to_row, to_col):
                 middle_square = position_to_square((cur_row, cur_col))
                 if self.get_piece(middle_square) is not None:
-                    return False  # blocked
+                    return fail()  # blocked
 
                 # Move to next square in the path
                 cur_row += step_row
@@ -398,16 +549,14 @@ class Board: # ChessBoard 8x8 grid
             # Final square cannot capture your own piece
             target_piece = self.get_piece(to_square)
             if target_piece is not None and target_piece.color == piece.color:
-                return False
-        
-        # Check for King movement capturing own piece
-        from chessgame.pieces import King # Import here to avoid circular imports
+                return fail()
 
+        # King normal move: cannot capture your own piece (castling already handled above)
         if isinstance(piece, King):
             target_piece = self.get_piece(to_square)
             if target_piece is not None and target_piece.color == piece.color:
-                return False
-
+                return fail()
+    
         # # Variables to track a potential en passant capture so we can undo it if the move is illegal     
         captured_en_passant_square = None
         captured_en_passant_piece = None
@@ -426,7 +575,7 @@ class Board: # ChessBoard 8x8 grid
                 or not isinstance(captured_en_passant_piece, Pawn)
                 or captured_en_passant_piece.color == piece.color
             ):
-                return False
+                return fail()
 
             # Remove it temporarily (like a capture)
             self.set_piece(captured_en_passant_square, None)
@@ -445,12 +594,9 @@ class Board: # ChessBoard 8x8 grid
             if captured_en_passant_square is not None:
                 self.set_piece(captured_en_passant_square, captured_en_passant_piece)
             
-            return False
+            return fail()
 
         piece.has_moved = True # Mark piece as having moved
-
-        # Import here to avoid circular import problems
-        from chessgame.pieces import Queen, WHITE, BLACK
 
         # Get the piece that just moved to the destination square
         moved_piece = self.get_piece(to_square)

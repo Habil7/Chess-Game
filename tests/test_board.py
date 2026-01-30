@@ -433,3 +433,47 @@ def test_en_passant_capture():
     assert b.get_piece("d5") is None
     assert isinstance(b.get_piece("d6"), Pawn)
     assert b.get_piece("d6").color == WHITE
+
+def test_castle_kingside_white():
+    b = Board()
+    b.set_piece("e1", King(WHITE))
+    b.set_piece("h1", Rook(WHITE))
+
+    # Clear squares between e1 and h1 (f1, g1 must be empty)
+    assert b.move_piece("e1", "g1", WHITE) is True
+
+    # King and rook should be moved
+    assert isinstance(b.get_piece("g1"), King)
+    assert isinstance(b.get_piece("f1"), Rook)
+
+def test_castle_blocked_if_king_moved():
+    b = Board()
+    k = King(WHITE)
+    r = Rook(WHITE)
+    k.has_moved = True
+
+    b.set_piece("e1", k)
+    b.set_piece("h1", r)
+
+    assert b.move_piece("e1", "g1", WHITE) is False
+
+def test_castle_blocked_if_rook_moved():
+    b = Board()
+    k = King(WHITE)
+    r = Rook(WHITE)
+    r.has_moved = True
+
+    b.set_piece("e1", k)
+    b.set_piece("h1", r)
+
+    assert b.move_piece("e1", "g1", WHITE) is False
+
+def test_castle_blocked_if_path_attacked():
+    b = Board()
+    b.set_piece("e1", King(WHITE))
+    b.set_piece("h1", Rook(WHITE))
+
+    # Attacker rook on f8 attacks f1 down the file (f7..f2 empty by default)
+    b.set_piece("f8", Rook(BLACK))
+
+    assert b.move_piece("e1", "g1", WHITE) is False

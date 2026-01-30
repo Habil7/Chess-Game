@@ -107,7 +107,7 @@ def test_pawn_illegal_backward_move():
     assert moved is True
 
     moved_back = b.move_piece("e3", "e2", WHITE)
-    assert moved_back is False\
+    assert moved_back is False
 
 # Pawn two-step from starting position 
 def test_pawn_cannot_move_forward_into_piece():
@@ -396,3 +396,18 @@ def test_king_cannot_capture_own_piece():
 
     moved = b.move_piece("e4", "f5", WHITE)
     assert moved is False
+
+# Test try_move_no_turn_switch
+def test_try_move_no_turn_switch_does_not_change_board():
+    b = Board()
+    b.setup_starting_position()
+
+    before_from = b.get_piece("e2")
+    before_to = b.get_piece("e4")
+
+    result = b.try_move_no_turn_switch("e2", "e4", WHITE)
+    assert result is True
+
+    # Board must be unchanged
+    assert b.get_piece("e2") is before_from
+    assert b.get_piece("e4") is before_to

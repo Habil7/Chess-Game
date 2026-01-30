@@ -8,6 +8,7 @@ class Piece:
         if color not in (WHITE, BLACK):
             raise ValueError("Color must be 'white' or 'black'")
         self.color = color
+        self.has_moved = False  # Track if the piece has moved
 
     def symbol(self) -> str:
         """Return the symbol representing the piece.

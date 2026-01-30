@@ -17,6 +17,12 @@ class Board: # ChessBoard 8x8 grid
 
             self.grid.append(row_list) # Add the row to the grid
 
+        # We track en passant target square here if needed.
+        # It only happens when a pawn moves two squares from its starting position.
+        # An enemy pawn next to it can capture as if it moved only one square.
+        # This capture is only allowed immediately on the next move.
+        self.en_passant_target = None # No en passant target square initially
+
     def get_piece(self, square: str):
         """Return the piece at the given chess square.
         """
@@ -59,22 +65,31 @@ class Board: # ChessBoard 8x8 grid
         if from_square == to_square: # Cannot move to the same square
             return False
         
-        piece = self.get_piece(from_square) # Get the piece at the source square
-        if piece is None or piece.color != turn_color:
+        from_piece = self.get_piece(from_square)
+        if from_piece is None or from_piece.color != turn_color:
             return False # No piece to move or not the player's piece
         
-        target_piece = self.get_piece(to_square) # Get the piece at the destination square
-        if target_piece is not None and target_piece.color == turn_color:
+        to_piece = self.get_piece(to_square)
+        if to_piece is not None and to_piece.color == turn_color:
             return False # Cannot capture own piece
         
-        moved = self.move_piece(from_square, to_square, turn_color) # Attempt the move
-        if not moved:
-            return False # Move failed
+        # Save current state to restore later
+        old_has_moved = from_piece.has_moved           # Save current has_moved status
+        old_en_passant_target = self.en_passant_target # Save current en passant target
         
-        self.set_piece(from_square, piece)      # Undo the move
-        self.set_piece(to_square, target_piece) # Restore captured piece if any
+        moved = self.move_piece(from_square, to_square, turn_color)
+        if not moved:
+            from_piece.has_moved = old_has_moved           # Restore has_moved status
+            self.en_passant_target = old_en_passant_target # Restore en passant target
+            return False                                   # Move was not successful
+        
+        self.set_piece(from_square, from_piece) # Undo the move
+        self.set_piece(to_square, to_piece)     # Restore captured piece if any
 
-        return True # Move was valid
+        from_piece.has_moved = old_has_moved           # Restore has_moved status
+        self.en_passant_target = old_en_passant_target # Restore en passant target
+
+        return True # Move was successful
 
     def has_any_legal_move(self, color: str) -> bool:
         """Check if the player of the given color has any legal moves.
@@ -401,5 +416,7 @@ class Board: # ChessBoard 8x8 grid
             self.set_piece(from_square, piece) # Undo the move
             self.set_piece(to_square, captured_piece)
             return False
+
+        piece.has_moved = True # Mark piece as having moved
 
         return True

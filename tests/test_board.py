@@ -412,10 +412,24 @@ def test_try_move_no_turn_switch_does_not_change_board():
     assert b.get_piece("e2") is before_from
     assert b.get_piece("e4") is before_to
 
-# # A white pawn moving to rank 8 should be replaced by a white Queen.
+# A white pawn moving to rank 8 should be replaced by a white Queen.
 def test_pawn_promotion_to_queen_white():
     b = Board()
     b.set_piece("a7", Pawn(WHITE))
     assert b.move_piece("a7", "a8", WHITE) is True
     assert isinstance(b.get_piece("a8"), Queen)
     assert b.get_piece("a8").color == WHITE
+
+# Test that en passant capture works and removes the captured pawn correctly
+def test_en_passant_capture():
+    b = Board()
+    b.set_piece("e5", Pawn(WHITE))
+    b.set_piece("d7", Pawn(BLACK))
+
+    assert b.move_piece("d7", "d5", BLACK) is True
+    assert b.en_passant_target == "d6"
+
+    assert b.move_piece("e5", "d6", WHITE) is True
+    assert b.get_piece("d5") is None
+    assert isinstance(b.get_piece("d6"), Pawn)
+    assert b.get_piece("d6").color == WHITE

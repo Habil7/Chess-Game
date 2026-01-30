@@ -277,6 +277,9 @@ class Board: # ChessBoard 8x8 grid
         from_row, from_col = square_to_position(from_square)
         to_row, to_col = square_to_position(to_square)
 
+        old_en_passant_target = self.en_passant_target
+        self.en_passant_target = None
+
         # Check if the piece can move according to its movement rules
         if not piece.can_move(from_row, from_col, to_row, to_col):
             return False # Move not allowed by piece rules
@@ -297,12 +300,17 @@ class Board: # ChessBoard 8x8 grid
                     middle_square = position_to_square((middle_row, from_col))
                     if self.get_piece(middle_square) is not None:
                         return False # Cannot jump over a piece
-            
+
+                    # # Store the square that can be captured via en passant on the next move
+                    self.en_passant_target = middle_square 
+
             else: # Capturing diagonally
                 if target_piece is None:
-                    return False # Cannot move diagonally without capturing
-                if target_piece.color == piece.color:
-                    return False # Cannot capture own piece
+                    if old_en_passant_target != to_square:
+                        return False # Cannot move diagonally without capturing
+                else:
+                    if target_piece.color == piece.color:
+                        return False # Cannot capture own piece
 
         # Check for Rook movement blocking
         if piece.__class__.__name__ == "Rook":
@@ -399,9 +407,29 @@ class Board: # ChessBoard 8x8 grid
             target_piece = self.get_piece(to_square)
             if target_piece is not None and target_piece.color == piece.color:
                 return False
-        
+
+        # # Variables to track a potential en passant capture so we can undo it if the move is illegal     
+        captured_en_passant_square = None
+        captured_en_passant_piece = None
+
         # Save what is currently on the destination square 
         captured_piece = self.get_piece(to_square)
+
+        # If this is an en passant capture, remove the pawn behind the target square
+        if isinstance(piece, Pawn) and from_col != to_col and captured_piece is None and old_en_passant_target == to_square:
+            # Captured pawn is on the same rank the capturing pawn started from
+            captured_en_passant_square = position_to_square((from_row, to_col))
+            captured_en_passant_piece = self.get_piece(captured_en_passant_square)
+
+            # Must exist and must be opponent pawn
+            if (captured_en_passant_piece is None 
+                or not isinstance(captured_en_passant_piece, Pawn)
+                or captured_en_passant_piece.color == piece.color
+            ):
+                return False
+
+            # Remove it temporarily (like a capture)
+            self.set_piece(captured_en_passant_square, None)
 
         # Make the move temporarily
         self.set_piece(to_square, piece)
@@ -409,8 +437,14 @@ class Board: # ChessBoard 8x8 grid
 
         # Illegal if it leaves your king in check
         if self.is_in_check(turn_color):
-            self.set_piece(from_square, piece) # Undo the move
+            # Undo the normal move
+            self.set_piece(from_square, piece) 
             self.set_piece(to_square, captured_piece)
+            
+            # Restore en passant captured pawn if we removed one
+            if captured_en_passant_square is not None:
+                self.set_piece(captured_en_passant_square, captured_en_passant_piece)
+            
             return False
 
         piece.has_moved = True # Mark piece as having moved

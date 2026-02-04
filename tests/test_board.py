@@ -397,6 +397,17 @@ def test_king_cannot_capture_own_piece():
     moved = b.move_piece("e4", "f5", WHITE)
     assert moved is False
 
+# Test that castling is not allowed when the king is in check
+def test_castle_illegal_when_king_in_check():
+    b = Board()
+    b.set_piece("e1", King(WHITE))
+    b.set_piece("h1", Rook(WHITE))
+
+    b.set_piece("e8", Rook(BLACK))
+
+    assert b.is_in_check(WHITE) is True
+    assert b.move_piece("e1", "g1", WHITE) is False
+
 # Test try_move_no_turn_switch
 def test_try_move_no_turn_switch_does_not_change_board():
     b = Board()
@@ -434,6 +445,24 @@ def test_en_passant_capture():
     assert isinstance(b.get_piece("d6"), Pawn)
     assert b.get_piece("d6").color == WHITE
 
+# Test that en passant is only allowed on the immediately following move
+def test_en_passant_only_immediate_next_move():
+    b = Board()
+    b.set_piece("e5", Pawn(WHITE))
+    b.set_piece("d7", Pawn(BLACK))
+
+    # Black double step creates en passant target
+    assert b.move_piece("d7", "d5", BLACK) is True
+    assert b.en_passant_target == "d6"
+
+    # White does a different move instead of capturing en passant
+    b.set_piece("a2", Pawn(WHITE))
+    assert b.move_piece("a2", "a3", WHITE) is True
+
+    # Now en passant should no longer be allowed
+    assert b.move_piece("e5", "d6", WHITE) is False
+
+# Test that white can castle king-side when all rules are satisfied
 def test_castle_kingside_white():
     b = Board()
     b.set_piece("e1", King(WHITE))
@@ -446,6 +475,7 @@ def test_castle_kingside_white():
     assert isinstance(b.get_piece("g1"), King)
     assert isinstance(b.get_piece("f1"), Rook)
 
+# Test that castling is not allowed if the king has already moved
 def test_castle_blocked_if_king_moved():
     b = Board()
     k = King(WHITE)
@@ -457,6 +487,7 @@ def test_castle_blocked_if_king_moved():
 
     assert b.move_piece("e1", "g1", WHITE) is False
 
+# Test that castling is not allowed if the rook has already moved
 def test_castle_blocked_if_rook_moved():
     b = Board()
     k = King(WHITE)
@@ -468,6 +499,7 @@ def test_castle_blocked_if_rook_moved():
 
     assert b.move_piece("e1", "g1", WHITE) is False
 
+# Test that castling is not allowed if the path is under attack
 def test_castle_blocked_if_path_attacked():
     b = Board()
     b.set_piece("e1", King(WHITE))
@@ -477,3 +509,4 @@ def test_castle_blocked_if_path_attacked():
     b.set_piece("f8", Rook(BLACK))
 
     assert b.move_piece("e1", "g1", WHITE) is False
+

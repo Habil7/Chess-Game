@@ -11,6 +11,7 @@ def piece_to_record(square: str, piece: object) -> dict:
         "square": square,                 # Position on the board (e.g., 'e4')
         "type": piece.__class__.__name__, # Type of the piece (e.g., Pawn, Rook)
         "color": piece.color,             # White or Black
+        "has_moved": piece.has_moved,     # For castling ad pawn
     }
 
 def record_to_piece(type_name: str, color: str) -> object:
@@ -36,7 +37,10 @@ def save_game(board, turn: str, save_name: str) -> None:
     """
     SAVES_DIR.mkdir(exist_ok = True) # Ensure the saves directory exists
     
-    data = {"turn": turn, "pieces": []}
+    data = {
+        "turn": turn, 
+        "en_passant_target": board.en_passant_target,
+        "pieces": []}
     
     from chessgame.types import position_to_square
 
@@ -71,9 +75,13 @@ def load_game(board, save_name: str) -> str:
         for col in range(8):
             board.grid[row][col] = None
 
+    # Restore en passant target
+    board.en_passant_target = data.get("en_passant_target", None)
+
     # Restore pieces
     for rec in data["pieces"]:
         piece = record_to_piece(rec["type"], rec["color"])
+        piece.has_moved = rec.get("has_moved", False) 
         board.set_piece(rec["square"], piece)
 
     return data["turn"] # White or Black

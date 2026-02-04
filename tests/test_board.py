@@ -427,7 +427,9 @@ def test_try_move_no_turn_switch_does_not_change_board():
 def test_pawn_promotion_to_queen_white():
     b = Board()
     b.set_piece("a7", Pawn(WHITE))
+
     assert b.move_piece("a7", "a8", WHITE) is True
+    assert b.promote_pawn("a8", "Q") is True
     assert isinstance(b.get_piece("a8"), Queen)
     assert b.get_piece("a8").color == WHITE
 
@@ -509,4 +511,3 @@ def test_castle_blocked_if_path_attacked():
     b.set_piece("f8", Rook(BLACK))
 
     assert b.move_piece("e1", "g1", WHITE) is False
-

@@ -95,12 +95,25 @@ def main():
         if not is_valid_square(from_square) or not is_valid_square(to_square):
             print("Invalid square. Please use squares like e2 e4.")
             continue
-
+        
+        # Try to move a piece from one square to another
         move_successful = board.move_piece(from_square, to_square, turn)
-
+        
         if not move_successful:
             print("Invalid move. Please try again.")
             continue
+
+        # Pawn promotion choice 
+        piece = board.get_piece(to_square)
+
+        # Check that the piece exists and is a pawn
+        if piece is not None and piece.__class__.__name__ == "Pawn":
+            # Check if the pawn reached the last rank for promotion
+            if (piece.color == WHITE and to_square[1] == "8") or (piece.color == BLACK and to_square[1] == "1"):
+                # Ask the player what piece to promote to
+                choice = input("Promote pawn to (Q/R/B/N): ")
+                # Promote the pawn using the Board method
+                board.promote_pawn(to_square, choice)
 
         board.print_board() # Print the board after the move
 

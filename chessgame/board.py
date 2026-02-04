@@ -601,13 +601,37 @@ class Board: # ChessBoard 8x8 grid
         # Get the piece that just moved to the destination square
         moved_piece = self.get_piece(to_square)
 
-        if isinstance(moved_piece, Pawn): # Check if the moved piece is a Pawn
-            # If a WHITE pawn reaches rank 8 → promote to Queen
-            if moved_piece.color == WHITE and to_square[1] == "8":
-                self.set_piece(to_square, Queen(WHITE))
-
-            # If a BLACK pawn reaches rank 1 → promote to Queen
-            elif moved_piece.color == BLACK and to_square[1] == "1":
-                self.set_piece(to_square, Queen(BLACK))
-
         return True # Move completed successfully
+    
+    def promote_pawn(self, square: str, choice: str) -> bool:
+        """
+        Promote a pawn on the given square.
+        Our choice: 'Q', 'R', 'B', 'N'. Defaults to Queen.
+        Returns True if promotion happened, False otherwise.
+        """
+        from chessgame.pieces import Pawn, Queen, Rook, Bishop, Knight
+
+        piece = self.get_piece(square)
+        if piece is None or not isinstance(piece, Pawn):
+            return False
+
+        # Must be on last rank
+        if not (
+            (piece.color == "white" and square[1] == "8") or
+            (piece.color == "black" and square[1] == "1")
+        ):
+            return False
+
+        c = choice.strip().upper()
+
+        if c == "R":
+            new_piece = Rook(piece.color)
+        elif c == "B":
+            new_piece = Bishop(piece.color)
+        elif c == "N":
+            new_piece = Knight(piece.color)
+        else:
+            new_piece = Queen(piece.color) # default
+
+        self.set_piece(square, new_piece)
+        return True
